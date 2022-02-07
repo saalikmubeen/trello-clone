@@ -1,26 +1,71 @@
-import React from 'react';
-import logo from './logo.svg';
-import './App.css';
+import { DragDropContext, DropResult } from "react-beautiful-dnd";
+import { AddNewItem } from "./AddNewItem";
+import { useAppState } from "./AppStateContext";
+import { Card } from "./Card";
+import { Column } from "./Column";
+import { AppContainer, Container } from "./styles";
+
 
 function App() {
-  return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.tsx</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
-  );
+    const { state, dispatch } = useAppState();
+
+    const onDragEnd = (result: DropResult) => {
+        const { destination, source } = result;
+
+        const sourceColumn = source.droppableId;
+        const targetColumn = destination?.droppableId!;
+        const dragIndex = source.index;
+        const hoverIndex = destination?.index!;
+
+        console.log(sourceColumn, targetColumn);
+        console.log(dragIndex, hoverIndex);
+
+        dispatch({
+            type: "MOVE_TASK",
+            dragIndex,
+            hoverIndex,
+            sourceColumn,
+            targetColumn,
+        });
+    };
+
+    return (
+        <>
+        <Container>
+                <AddNewItem
+                    text="&#10010; Add another list"
+                    dark={false}
+                    onAdd={(text) =>
+                        dispatch({ type: "ADD_COLUMN", title: text })
+                    }
+                />
+        </Container>
+
+            <AppContainer>
+                <DragDropContext onDragEnd={onDragEnd}>
+                    {state.columns.map((column, idx) => {
+                        return (
+                            <Column
+                                title={column.title}
+                                key={column.id}
+                                columnId={column.id}
+                            >
+                                {column.tasks.map((task, taskIdx) => (
+                                    <Card
+                                        text={task.text}
+                                        key={task.id}
+                                        columnId={column.id}
+                                        taskId={task.id}
+                                        index={taskIdx}
+                                    />
+                                ))}
+                            </Column>
+                        );
+                    })}
+                </DragDropContext>
+            </AppContainer>
+            </>
+    );
 }
 
 export default App;
